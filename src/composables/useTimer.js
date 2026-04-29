@@ -1,4 +1,4 @@
-import { ref, computed, onUnmounted } from 'vue'
+import { ref, computed, onUnmounted, onMounted } from 'vue'
 
 const WORK_DURATION = 25 * 60
 const BREAK_DURATION = 5 * 60
@@ -8,6 +8,8 @@ export function useTimer({ onComplete } = {}) {
   const isRunning = ref(false)
   const isWorkSession = ref(true)
   const intervalId = ref(null)
+  let startTimestamp = null
+  let initialTimeLeft = 0
 
   const minutes = computed(() => Math.floor(timeLeft.value / 60))
   const seconds = computed(() => timeLeft.value % 60)
@@ -20,13 +22,22 @@ export function useTimer({ onComplete } = {}) {
   const totalTime = computed(() => isWorkSession.value ? WORK_DURATION : BREAK_DURATION)
   const progress = computed(() => timeLeft.value / totalTime.value)
 
+  function updateTimeLeft() {
+    if (!isRunning.value || startTimestamp === null) return
+    const elapsedSeconds = Math.floor((Date.now() - startTimestamp) / 1000)
+    const remaining = Math.max(0, initialTimeLeft - elapsedSeconds)
+    timeLeft.value = remaining
+    return remaining
+  }
+
   function start() {
     if (isRunning.value) return
     isRunning.value = true
+    startTimestamp = Date.now()
+    initialTimeLeft = timeLeft.value
     intervalId.value = setInterval(() => {
-      if (timeLeft.value > 0) {
-        timeLeft.value--
-      } else {
+      const remaining = updateTimeLeft()
+      if (remaining !== undefined && remaining === 0) {
         completeSession()
       }
     }, 1000)
@@ -38,10 +49,13 @@ export function useTimer({ onComplete } = {}) {
       clearInterval(intervalId.value)
       intervalId.value = null
     }
+    updateTimeLeft()
   }
 
   function reset() {
     pause()
+    startTimestamp = null
+    initialTimeLeft = 0
     timeLeft.value = isWorkSession.value ? WORK_DURATION : BREAK_DURATION
   }
 
@@ -67,8 +81,19 @@ export function useTimer({ onComplete } = {}) {
     }
   }
 
+  function handleVisibilityChange() {
+    if (document.visibilityState === 'visible' && isRunning.value) {
+      updateTimeLeft()
+    }
+  }
+
+  onMounted(() => {
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+  })
+
   onUnmounted(() => {
     if (intervalId.value) clearInterval(intervalId.value)
+    document.removeEventListener('visibilitychange', handleVisibilityChange)
   })
 
   return {
