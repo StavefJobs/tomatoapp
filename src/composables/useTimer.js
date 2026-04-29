@@ -3,7 +3,7 @@ import { ref, computed, onUnmounted } from 'vue'
 const WORK_DURATION = 25 * 60
 const BREAK_DURATION = 5 * 60
 
-export function useTimer() {
+export function useTimer({ onComplete } = {}) {
   const timeLeft = ref(WORK_DURATION)
   const isRunning = ref(false)
   const isWorkSession = ref(true)
@@ -16,6 +16,9 @@ export function useTimer() {
     const s = seconds.value.toString().padStart(2, '0')
     return `${m}:${s}`
   })
+
+  const totalTime = computed(() => isWorkSession.value ? WORK_DURATION : BREAK_DURATION)
+  const progress = computed(() => timeLeft.value / totalTime.value)
 
   function start() {
     if (isRunning.value) return
@@ -49,8 +52,7 @@ export function useTimer() {
       duration: isWorkSession.value ? WORK_DURATION : BREAK_DURATION
     }
     saveSession(session)
-    isWorkSession.value = !isWorkSession.value
-    timeLeft.value = isWorkSession.value ? WORK_DURATION : BREAK_DURATION
+    if (onComplete) onComplete(session)
   }
 
   async function saveSession(session) {
@@ -76,6 +78,8 @@ export function useTimer() {
     displayTime,
     minutes,
     seconds,
+    totalTime,
+    progress,
     start,
     pause,
     reset
