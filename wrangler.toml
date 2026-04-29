@@ -4,4 +4,4 @@ pages_build_output_dir = "dist"
 [[d1_databases]]
 binding = "DB"
 database_name = "tomato-db"
-database_id = "tomato-db-id"
+database_id = "3492e6d0-5fe3-41e6-9916-0a6893221ae4"
