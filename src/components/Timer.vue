@@ -2,15 +2,15 @@
   <div class="timer">
     <div class="timer-display" :class="{ work: isWorkSession, break: !isWorkSession }">
       <div class="circle-container">
-        <svg width="220" height="220" viewBox="0 0 220 220">
-          <circle stroke-width="8" fill="transparent" r="90" cx="110" cy="110"
+        <svg width="242" height="242" viewBox="0 0 242 242">
+          <circle stroke-width="10" fill="transparent" r="99" cx="121" cy="121"
             :stroke="isWorkSession ? '#FF6B6B' : '#4ECDC4'" stroke-opacity="0.2"/>
-          <circle stroke-width="8" fill="transparent" r="90" cx="110" cy="110"
+          <circle stroke-width="10" fill="transparent" r="99" cx="121" cy="121"
             :stroke="isWorkSession ? '#FF6B6B' : '#4ECDC4'"
             stroke-linecap="round"
             :stroke-dasharray="circumference"
             :stroke-dashoffset="strokeDashoffset"
-            transform="rotate(-90 110 110)"/>
+            transform="rotate(-90 121 121)"/>
         </svg>
         <div class="time-content">
           <h2>{{ isWorkSession ? '工作时间' : '休息时间' }}</h2>
@@ -29,8 +29,10 @@
         <div class="modal-icon">⏰</div>
         <h3>时间到！</h3>
         <p>{{ completedSessionType === 'work' ? '工作时间' : '休息时间' }}已完成</p>
+        <p class="next-session">接下来：{{ nextSessionText }}</p>
         <div class="modal-actions">
-          <button @click="closeModal" class="modal-btn primary">重置</button>
+          <button @click="startNext" class="modal-btn primary">开始下一个</button>
+          <button @click="resetTimer" class="modal-btn secondary">重置</button>
         </div>
       </div>
     </div>
@@ -41,7 +43,8 @@
 import { ref, computed } from 'vue'
 import { useTimer } from '@/composables/useTimer'
 
-const circumference = 2 * Math.PI * 90
+const CIRCLE_RADIUS = 99
+const circumference = 2 * Math.PI * CIRCLE_RADIUS
 
 const showModal = ref(false)
 const completedSessionType = ref('')
@@ -55,10 +58,24 @@ const { timeLeft, isRunning, isWorkSession, displayTime, progress, start, pause,
 
 const strokeDashoffset = computed(() => circumference * (1 - progress.value))
 
-function closeModal() {
+const nextSessionText = computed(() => {
+  return completedSessionType.value === 'work' ? '休息时间 (5分钟)' : '工作时间 (25分钟)'
+})
+
+function startNext() {
+  showModal.value = false
+  completedSessionType.value = ''
+  start()
+}
+
+function resetTimer() {
   showModal.value = false
   completedSessionType.value = ''
   reset()
+}
+
+function closeModal() {
+  resetTimer()
 }
 </script>
 
@@ -74,8 +91,8 @@ function closeModal() {
 
 .circle-container {
   position: relative;
-  width: 220px;
-  height: 220px;
+  width: 242px;
+  height: 242px;
   margin: 0 auto;
 }
 
@@ -168,6 +185,12 @@ button:disabled {
   margin-bottom: 1.5rem;
 }
 
+.next-session {
+  color: #888;
+  font-size: 0.9rem;
+  margin: 0.5rem 0 1rem;
+}
+
 .modal-actions {
   display: flex;
   gap: 1rem;
@@ -186,5 +209,14 @@ button:disabled {
 .modal-btn.primary {
   background: var(--primary-color, #FF6B6B);
   color: white;
+}
+
+.modal-btn.secondary {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.modal-btn.secondary:hover {
+  background: #d0d0d0;
 }
 </style>

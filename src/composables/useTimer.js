@@ -66,6 +66,11 @@ export function useTimer({ onComplete } = {}) {
       duration: isWorkSession.value ? WORK_DURATION : BREAK_DURATION
     }
     saveSession(session)
+
+    // 切换 session 类型并设置新时间
+    isWorkSession.value = !isWorkSession.value
+    timeLeft.value = isWorkSession.value ? WORK_DURATION : BREAK_DURATION
+
     if (onComplete) onComplete(session)
   }
 
